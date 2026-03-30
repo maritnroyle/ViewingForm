@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Calendar, Clock, User, Mail, Phone, Home, Info, Send, MapPin, Globe, MessageCircle, PenTool, X } from 'lucide-react';
+import { Calendar, Clock, User, Mail, Phone, Home, Info, Send, MapPin, Globe, MessageCircle, PenTool, X, Facebook, Instagram } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { jsPDF } from 'jspdf';
 
@@ -56,12 +56,12 @@ const generatePDF = (data: any, signatureBase64: string) => {
 
   // Terms and Conditions
   doc.addPage();
-  y = 20;
-  doc.setFontSize(16);
+  y = 15;
+  doc.setFontSize(15);
   doc.setTextColor(0, 40, 85);
   doc.setFont("helvetica", "bold");
   doc.text("Room Viewing Terms and Conditions", 20, y);
-  y += 12;
+  y += 10;
 
   doc.setTextColor(0, 0, 0);
   
@@ -109,12 +109,12 @@ const generatePDF = (data: any, signatureBase64: string) => {
   ];
 
   sections.forEach(sec => {
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.text(sec.title, 20, y);
     y += 5;
     
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     sec.items.forEach(item => {
       const lines = doc.splitTextToSize(`• ${item}`, 170);
@@ -134,10 +134,10 @@ const generatePDF = (data: any, signatureBase64: string) => {
   if (signatureBase64) {
     // Add a subtle border/background for the signature area
     doc.setDrawColor(200, 200, 200);
-    doc.rect(20, y, 80, 30);
-    doc.addImage(signatureBase64, 'PNG', 20, y, 80, 30);
+    doc.rect(20, y, 70, 25);
+    doc.addImage(signatureBase64, 'PNG', 20, y, 70, 25);
     
-    y += 35;
+    y += 30;
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 100, 100);
@@ -153,10 +153,22 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [sigError, setSigError] = useState(false);
+  const [emailError, setEmailError] = useState(false);
   const sigCanvas = useRef<SignatureCanvas>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(data.email as string)) {
+      setEmailError(true);
+      return;
+    }
+    setEmailError(false);
+
     if (sigCanvas.current?.isEmpty()) {
       setSigError(true);
       return;
@@ -164,8 +176,6 @@ export default function App() {
     setSigError(false);
     setIsSubmitting(true);
 
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
     const signatureBase64 = sigCanvas.current?.toDataURL() || '';
     
     // Generate PDF document (including signature)
@@ -246,9 +256,14 @@ export default function App() {
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600 bg-sky-50/50 p-4 rounded-xl border border-sky-100">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-[#42B4E6] shrink-0 mt-0.5" />
-                  <span>Short walk to Bishopdale Village Mall (library, PostShop, ATMs, New World supermarket, cafes). 8 mins drive from Christchurch airport.</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-[#42B4E6] shrink-0 mt-0.5" />
+                    <span>Short walk to Bishopdale Village Mall (library, PostShop, ATMs, New World supermarket, cafes). 8 mins drive from Christchurch airport.</span>
+                  </div>
+                  <a href="https://maps.app.goo.gl/nipfuViF6ye2a4wd8" target="_blank" rel="noreferrer" className="inline-block text-[#42B4E6] hover:text-[#002855] transition-colors ml-8 font-medium underline underline-offset-2">
+                    View on Google Maps
+                  </a>
                 </div>
                 <div className="flex flex-col gap-3">
                   <a href="https://whitecloudhomes.netlify.app/" target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:text-[#002855] transition-colors">
@@ -258,6 +273,14 @@ export default function App() {
                   <a href="https://wa.me/message/QKHUHJ5Y273HL1" target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:text-[#002855] transition-colors">
                     <MessageCircle className="w-5 h-5 text-[#42B4E6] shrink-0" />
                     <span>Contact Us on WhatsApp</span>
+                  </a>
+                  <a href="https://www.facebook.com/profile.php?id=61551048270198" target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:text-[#002855] transition-colors">
+                    <Facebook className="w-5 h-5 text-[#42B4E6] shrink-0" />
+                    <span>Follow us on Facebook</span>
+                  </a>
+                  <a href="https://www.instagram.com/whitecloud_homes" target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:text-[#002855] transition-colors">
+                    <Instagram className="w-5 h-5 text-[#42B4E6] shrink-0" />
+                    <span>Follow us on Instagram</span>
                   </a>
                 </div>
               </div>
@@ -287,8 +310,9 @@ export default function App() {
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email Address *</label>
                 <div className="relative">
                   <Mail className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input required type="email" id="email" name="email" className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" placeholder="jane@example.com" />
+                  <input required type="email" id="email" name="email" className={`w-full pl-10 pr-4 py-2 border ${emailError ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} placeholder="jane@example.com" onChange={() => setEmailError(false)} />
                 </div>
+                {emailError && <p className="text-red-500 text-sm mt-1">Please enter a valid email address.</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="phone" className="block text-sm font-medium text-slate-700">Phone / WhatsApp *</label>
@@ -336,7 +360,7 @@ export default function App() {
                 <label htmlFor="viewingDate" className="block text-sm font-medium text-slate-700">Preferred Viewing Date *</label>
                 <div className="relative">
                   <Calendar className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input required type="date" id="viewingDate" name="viewingDate" className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" />
+                  <input required type="date" id="viewingDate" name="viewingDate" min={new Date().toISOString().split('T')[0]} className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" />
                 </div>
               </div>
               <div className="space-y-2">

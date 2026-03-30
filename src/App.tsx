@@ -2,6 +2,20 @@ import React, { useState, useRef } from 'react';
 import { Calendar, Clock, User, Mail, Phone, Home, Info, Send, MapPin, Globe, MessageCircle, PenTool, X, Facebook, Instagram } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { jsPDF } from 'jspdf';
+import { useForm } from 'react-hook-form';
+
+type FormValues = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  passport: string;
+  nationality: string;
+  viewingRoom: string;
+  viewingDate: string;
+  viewingTime: string;
+  questions: string;
+};
 
 const generatePDF = (data: any, signatureBase64: string) => {
   const doc = new jsPDF();
@@ -153,33 +167,32 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [sigError, setSigError] = useState(false);
-  const [emailError, setEmailError] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [pendingData, setPendingData] = useState<FormValues | null>(null);
   const sigCanvas = useRef<SignatureCanvas>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
-    
-    // Email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(data.email as string)) {
-      setEmailError(true);
-      return;
-    }
-    setEmailError(false);
+  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+    mode: 'onChange'
+  });
 
+  const onSubmit = async (data: FormValues) => {
     if (sigCanvas.current?.isEmpty()) {
       setSigError(true);
       return;
     }
     setSigError(false);
+    setPendingData(data);
+    setShowVerification(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!pendingData) return;
     setIsSubmitting(true);
 
     const signatureBase64 = sigCanvas.current?.toDataURL() || '';
     
     // Generate PDF document (including signature)
-    const pdfBase64 = generatePDF(data, signatureBase64);
+    const pdfBase64 = generatePDF(pendingData, signatureBase64);
 
     try {
       // Send submission to our backend (which handles both webhook and email)
@@ -189,10 +202,10 @@ export default function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: data.email,
-          name: data.firstName,
+          email: pendingData.email,
+          name: pendingData.firstName,
           pdfBase64: pdfBase64,
-          formData: data
+          formData: pendingData
         }),
       });
 
@@ -200,6 +213,7 @@ export default function App() {
         throw new Error('Failed to submit form');
       }
 
+      setShowVerification(false);
       setIsSubmitted(true);
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -285,7 +299,7 @@ export default function App() {
         </div>
 
         {/* Form Section */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-8 space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl shadow-sm p-8 space-y-8">
           
           {/* Personal Details */}
           <section>
@@ -296,37 +310,84 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label htmlFor="firstName" className="block text-sm font-medium text-slate-700">First Name *</label>
-                <input required type="text" id="firstName" name="firstName" className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" placeholder="Jane" />
+                <input 
+                  {...register("firstName", { required: "First name is required" })}
+                  type="text" 
+                  id="firstName" 
+                  className={`w-full px-4 py-2 border ${errors.firstName ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 
+                  placeholder="Jane" 
+                />
+                {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="lastName" className="block text-sm font-medium text-slate-700">Last Name *</label>
-                <input required type="text" id="lastName" name="lastName" className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" placeholder="Doe" />
+                <input 
+                  {...register("lastName", { required: "Last name is required" })}
+                  type="text" 
+                  id="lastName" 
+                  className={`w-full px-4 py-2 border ${errors.lastName ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 
+                  placeholder="Doe" 
+                />
+                {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email Address *</label>
                 <div className="relative">
                   <Mail className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input required type="email" id="email" name="email" className={`w-full pl-10 pr-4 py-2 border ${emailError ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} placeholder="jane@example.com" onChange={() => setEmailError(false)} />
+                  <input 
+                    {...register("email", { 
+                      required: "Email is required",
+                      pattern: {
+                        value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                        message: "Please enter a valid email address"
+                      }
+                    })}
+                    type="email" 
+                    id="email" 
+                    className={`w-full pl-10 pr-4 py-2 border ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 
+                    placeholder="jane@example.com" 
+                  />
                 </div>
-                {emailError && <p className="text-red-500 text-sm mt-1">Please enter a valid email address.</p>}
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="phone" className="block text-sm font-medium text-slate-700">Phone / WhatsApp *</label>
                 <div className="relative">
                   <Phone className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input required type="tel" id="phone" name="phone" className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" placeholder="+64 21 000 0000" />
+                  <input 
+                    {...register("phone", { required: "Phone number is required" })}
+                    type="tel" 
+                    id="phone" 
+                    className={`w-full pl-10 pr-4 py-2 border ${errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 
+                    placeholder="+64 21 000 0000" 
+                  />
                 </div>
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="passport" className="block text-sm font-medium text-slate-700">Passport Number *</label>
-                <input required type="text" id="passport" name="passport" className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" placeholder="AB123456" />
+                <input 
+                  {...register("passport", { required: "Passport number is required" })}
+                  type="text" 
+                  id="passport" 
+                  className={`w-full px-4 py-2 border ${errors.passport ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 
+                  placeholder="AB123456" 
+                />
+                {errors.passport && <p className="text-red-500 text-sm mt-1">{errors.passport.message}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="nationality" className="block text-sm font-medium text-slate-700">Nationality *</label>
                 <div className="relative">
                   <Globe className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input required type="text" id="nationality" name="nationality" className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" placeholder="New Zealand" />
+                  <input 
+                    {...register("nationality", { required: "Nationality is required" })}
+                    type="text" 
+                    id="nationality" 
+                    className={`w-full pl-10 pr-4 py-2 border ${errors.nationality ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 
+                    placeholder="New Zealand" 
+                  />
                 </div>
+                {errors.nationality && <p className="text-red-500 text-sm mt-1">{errors.nationality.message}</p>}
               </div>
             </div>
           </section>
@@ -342,7 +403,11 @@ export default function App() {
                 <label htmlFor="viewingRoom" className="block text-sm font-medium text-slate-700">Viewing Room *</label>
                 <div className="relative">
                   <Home className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <select required id="viewingRoom" name="viewingRoom" className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all bg-white">
+                  <select 
+                    {...register("viewingRoom", { required: "Please select a room" })}
+                    id="viewingRoom" 
+                    className={`w-full pl-10 pr-4 py-2 border ${errors.viewingRoom ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all bg-white`}
+                  >
                     <option value="">Select a room...</option>
                     <option value="ROOM1">ROOM1</option>
                     <option value="ROOM2">ROOM2</option>
@@ -351,20 +416,34 @@ export default function App() {
                     <option value="ROOM5">ROOM5</option>
                   </select>
                 </div>
+                {errors.viewingRoom && <p className="text-red-500 text-sm mt-1">{errors.viewingRoom.message}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="viewingDate" className="block text-sm font-medium text-slate-700">Preferred Viewing Date *</label>
                 <div className="relative">
                   <Calendar className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input required type="date" id="viewingDate" name="viewingDate" min={new Date().toISOString().split('T')[0]} className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" />
+                  <input 
+                    {...register("viewingDate", { required: "Viewing date is required" })}
+                    type="date" 
+                    id="viewingDate" 
+                    min={new Date().toISOString().split('T')[0]} 
+                    className={`w-full pl-10 pr-4 py-2 border ${errors.viewingDate ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 
+                  />
                 </div>
+                {errors.viewingDate && <p className="text-red-500 text-sm mt-1">{errors.viewingDate.message}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="viewingTime" className="block text-sm font-medium text-slate-700">Preferred Time *</label>
                 <div className="relative">
                   <Clock className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input required type="time" id="viewingTime" name="viewingTime" className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all" />
+                  <input 
+                    {...register("viewingTime", { required: "Viewing time is required" })}
+                    type="time" 
+                    id="viewingTime" 
+                    className={`w-full pl-10 pr-4 py-2 border ${errors.viewingTime ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 
+                  />
                 </div>
+                {errors.viewingTime && <p className="text-red-500 text-sm mt-1">{errors.viewingTime.message}</p>}
               </div>
             </div>
           </section>
@@ -378,7 +457,13 @@ export default function App() {
             <div className="space-y-6">
               <div className="space-y-2">
                 <label htmlFor="questions" className="block text-sm font-medium text-slate-700">Any questions or special requirements?</label>
-                <textarea id="questions" name="questions" rows={4} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all resize-none" placeholder="Do you have parking available?"></textarea>
+                <textarea 
+                  {...register("questions")}
+                  id="questions" 
+                  rows={4} 
+                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#002855] focus:border-transparent outline-none transition-all resize-none" 
+                  placeholder="Do you have parking available?"
+                ></textarea>
               </div>
             </div>
           </section>
@@ -410,8 +495,8 @@ export default function App() {
 
           {/* Submit Button */}
           <div className="pt-4">
-            <button disabled={isSubmitting} type="submit" className="w-full bg-[#002855] text-white font-medium py-3 px-4 rounded-xl hover:bg-[#002855]/90 focus:ring-4 focus:ring-sky-200 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-              <span>{isSubmitting ? 'Sending...' : 'Submit Viewing Request'}</span>
+            <button type="submit" className="w-full bg-[#002855] text-white font-medium py-3 px-4 rounded-xl hover:bg-[#002855]/90 focus:ring-4 focus:ring-sky-200 transition-all flex items-center justify-center gap-2">
+              <span>Review Request</span>
               <Send className="w-4 h-4" />
             </button>
             <p className="text-center text-xs text-slate-500 mt-4">
@@ -477,6 +562,60 @@ export default function App() {
             <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
               <button type="button" onClick={() => setShowTerms(false)} className="w-full bg-[#002855] text-white py-2 rounded-lg hover:bg-[#002855]/90 transition-colors font-medium">
                 I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Modal */}
+      {showVerification && pendingData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-[#002855]">Verify Your Details</h2>
+              <button type="button" onClick={() => setShowVerification(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto text-sm text-slate-600 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div><span className="font-semibold text-slate-800">Name:</span> {pendingData.firstName} {pendingData.lastName}</div>
+                <div><span className="font-semibold text-slate-800">Email:</span> {pendingData.email}</div>
+                <div><span className="font-semibold text-slate-800">Phone:</span> {pendingData.phone}</div>
+                <div><span className="font-semibold text-slate-800">Passport:</span> {pendingData.passport}</div>
+                <div><span className="font-semibold text-slate-800">Nationality:</span> {pendingData.nationality}</div>
+                <div><span className="font-semibold text-slate-800">Room:</span> {pendingData.viewingRoom}</div>
+                <div><span className="font-semibold text-slate-800">Date:</span> {pendingData.viewingDate}</div>
+                <div><span className="font-semibold text-slate-800">Time:</span> {pendingData.viewingTime}</div>
+              </div>
+              {pendingData.questions && (
+                <div className="mt-4">
+                  <span className="font-semibold text-slate-800">Questions/Requirements:</span>
+                  <p className="mt-1 p-3 bg-slate-50 rounded-lg border border-slate-100">{pendingData.questions}</p>
+                </div>
+              )}
+              <div className="mt-6 p-4 bg-sky-50 rounded-lg border border-sky-100">
+                <p className="text-xs text-slate-600">Please verify that all details above are correct. Once confirmed, a PDF copy will be generated and sent to your email.</p>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex flex-col sm:flex-row justify-end gap-3">
+              <button 
+                type="button" 
+                onClick={() => setShowVerification(false)} 
+                disabled={isSubmitting}
+                className="px-6 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-70"
+              >
+                Edit Details
+              </button>
+              <button 
+                type="button" 
+                onClick={handleConfirmSubmit} 
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-[#002855] text-white rounded-lg hover:bg-[#002855]/90 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {isSubmitting ? 'Submitting...' : 'Confirm & Submit'}
+                {!isSubmitting && <Send className="w-4 h-4" />}
               </button>
             </div>
           </div>

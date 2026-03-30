@@ -182,17 +182,8 @@ export default function App() {
     const pdfBase64 = generatePDF(data, signatureBase64);
 
     try {
-      // 1. Send webhook with ONLY the form details (no PDF, no signature)
-      await fetch('https://petrelplace.duckdns.org/api/webhook/b1Awrf0abTu_DARg3uLUgrQ4', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      // 2. Send email with the generated PDF via our backend
-      await fetch('/api/send-email', {
+      // Send submission to our backend (which handles both webhook and email)
+      const response = await fetch('/api/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -200,9 +191,14 @@ export default function App() {
         body: JSON.stringify({
           email: data.email,
           name: data.firstName,
-          pdfBase64: pdfBase64
+          pdfBase64: pdfBase64,
+          formData: data
         }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit form');
+      }
 
       setIsSubmitted(true);
     } catch (error) {

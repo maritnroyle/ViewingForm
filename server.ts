@@ -10,10 +10,24 @@ async function startServer() {
   // Increase payload limit for base64 PDF
   app.use(express.json({ limit: '50mb' }));
 
-  app.post('/api/send-email', async (req, res) => {
+  app.post('/api/submit', async (req, res) => {
     try {
-      const { email, pdfBase64, name } = req.body;
+      const { email, pdfBase64, name, formData } = req.body;
 
+      // 1. Send webhook to Home Assistant
+      try {
+        await fetch('https://petrelplace.duckdns.org/api/webhook/b1Awrf0abTu_DARg3uLUgrQ4', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+      } catch (webhookError) {
+        console.error('Webhook failed:', webhookError);
+      }
+
+      // 2. Send Email
       if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
         console.error('Missing Gmail credentials in environment variables.');
         return res.status(500).json({ error: 'Email service is not configured.' });

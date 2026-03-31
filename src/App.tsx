@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 type FormValues = {
   firstName: string;
   lastName: string;
+  gender: string;
   email: string;
   phone: string;
   passport: string;
@@ -18,7 +19,7 @@ type FormValues = {
 };
 
 const generatePDF = (data: any, signatureBase64: string) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({ compress: true });
   let y = 20;
 
   // Title
@@ -37,6 +38,7 @@ const generatePDF = (data: any, signatureBase64: string) => {
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
   doc.text(`Name: ${data.firstName} ${data.lastName}`, 20, y); y += 7;
+  doc.text(`Gender: ${data.gender}`, 20, y); y += 7;
   doc.text(`Email: ${data.email}`, 20, y); y += 7;
   doc.text(`Phone: ${data.phone}`, 20, y); y += 7;
   doc.text(`Passport: ${data.passport}`, 20, y); y += 7;
@@ -149,7 +151,7 @@ const generatePDF = (data: any, signatureBase64: string) => {
     // Add a subtle border/background for the signature area
     doc.setDrawColor(200, 200, 200);
     doc.rect(20, y, 70, 25);
-    doc.addImage(signatureBase64, 'PNG', 20, y, 70, 25);
+    doc.addImage(signatureBase64, 'JPEG', 20, y, 70, 25, undefined, 'FAST');
     
     y += 30;
     doc.setFontSize(9);
@@ -189,7 +191,7 @@ export default function App() {
     if (!pendingData) return;
     setIsSubmitting(true);
 
-    const signatureBase64 = sigCanvas.current?.toDataURL() || '';
+    const signatureBase64 = sigCanvas.current?.getCanvas().toDataURL('image/jpeg', 0.5) || '';
     
     // Generate PDF document (including signature)
     const pdfBase64 = generatePDF(pendingData, signatureBase64);
@@ -329,6 +331,22 @@ export default function App() {
                   placeholder="Doe" 
                 />
                 {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="gender" className="block text-sm font-medium text-slate-700">Gender *</label>
+                <div className="relative">
+                  <User className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <select 
+                    {...register("gender", { required: "Please select your gender" })}
+                    id="gender" 
+                    className={`w-full pl-10 pr-4 py-2 border ${errors.gender ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all bg-white`}
+                  >
+                    <option value="">Select gender...</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender.message}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email Address *</label>
@@ -478,10 +496,11 @@ export default function App() {
               <p className="text-sm text-slate-600">
                 I have read and agree to the <button type="button" onClick={() => setShowTerms(true)} className="text-[#42B4E6] underline font-medium hover:text-[#002855] transition-colors">Room Viewing Terms and Conditions</button>.
               </p>
-              <div className={`border-2 rounded-xl overflow-hidden bg-slate-50 ${sigError ? 'border-red-400' : 'border-slate-200'}`}>
+              <div className={`border-2 rounded-xl overflow-hidden bg-white ${sigError ? 'border-red-400' : 'border-slate-200'}`}>
                 <SignatureCanvas 
                   ref={sigCanvas}
                   penColor="#002855"
+                  backgroundColor="rgb(255,255,255)"
                   canvasProps={{className: 'w-full h-40 cursor-crosshair'}}
                   onBegin={() => setSigError(false)}
                 />
@@ -581,6 +600,7 @@ export default function App() {
             <div className="p-6 overflow-y-auto text-sm text-slate-600 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div><span className="font-semibold text-slate-800">Name:</span> {pendingData.firstName} {pendingData.lastName}</div>
+                <div><span className="font-semibold text-slate-800">Gender:</span> {pendingData.gender}</div>
                 <div><span className="font-semibold text-slate-800">Email:</span> {pendingData.email}</div>
                 <div><span className="font-semibold text-slate-800">Phone:</span> {pendingData.phone}</div>
                 <div><span className="font-semibold text-slate-800">Passport:</span> {pendingData.passport}</div>
@@ -618,6 +638,15 @@ export default function App() {
                 {!isSubmitting && <Send className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Global Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4">
+            <div className="w-12 h-12 border-4 border-sky-100 border-t-[#002855] rounded-full animate-spin"></div>
+            <p className="text-[#002855] font-medium">Submitting your request...</p>
           </div>
         </div>
       )}

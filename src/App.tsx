@@ -100,7 +100,7 @@ const generatePDF = (data: any, signatureBase64: string) => {
       items: [
         "Privacy First: Viewers are permitted to see the requested bedroom and all communal areas (kitchen, living room, shared bathrooms). Access to other occupied bedrooms is strictly prohibited.",
         "Respect the Space: Please refrain from sitting on furniture, opening drawers/closets containing personal belongings (unless specified), or using the bathroom facilities.",
-        "Footwear Policy: To keep communal floors clean, please remove your shoes at the front door or use the provided shoe covers.",
+        "Footwear Policy: To keep communal floors clean, please remove your shoes at the front door and use the shoe rack provided.",
         "No Smoking: Smoking or vaping is strictly prohibited inside the property and within the immediate vicinity of the entrance.",
         "Zero Tolerance: Any disrespectful, aggressive, or discriminatory behavior toward the current occupants will result in an immediate termination of the viewing."
       ]
@@ -538,7 +538,7 @@ export default function App() {
                 <ul className="list-disc pl-5 space-y-1">
                   <li><strong>Privacy First:</strong> Viewers are permitted to see the requested bedroom and all communal areas (kitchen, living room, shared bathrooms). Access to other occupied bedrooms is strictly prohibited.</li>
                   <li><strong>Respect the Space:</strong> Please refrain from sitting on furniture, opening drawers/closets containing personal belongings (unless specified), or using the bathroom facilities.</li>
-                  <li><strong>Footwear Policy:</strong> To keep communal floors clean, please remove your shoes at the front door or use the provided shoe covers.</li>
+                  <li><strong>Footwear Policy:</strong> To keep communal floors clean, please remove your shoes at the front door and use the shoe rack provided.</li>
                   <li><strong>No Smoking:</strong> Smoking or vaping is strictly prohibited inside the property and within the immediate vicinity of the entrance.</li>
                   <li><strong>Zero Tolerance:</strong> Any disrespectful, aggressive, or discriminatory behavior toward the current occupants will result in an immediate termination of the viewing.</li>
                 </ul>

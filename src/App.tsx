@@ -398,7 +398,10 @@ export default function App() {
                 <div className="relative">
                   <Globe className="w-5 h-5 text-[#42B4E6] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input 
-                    {...register("nationality", { required: "Nationality is required" })}
+                    {...register("nationality", { 
+                      required: "Nationality is required",
+                      minLength: { value: 2, message: "Nationality must be at least 2 characters" }
+                    })}
                     type="text" 
                     id="nationality" 
                     className={`w-full pl-10 pr-4 py-2 border ${errors.nationality ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:ring-[#002855]'} rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`} 

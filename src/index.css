@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+.PhoneInputInput {
+  @apply outline-none bg-transparent w-full;
+}
+
+.PhoneInput {
+  @apply flex items-center;
+}
+
+.PhoneInputCountry {
+  @apply mr-3;
+}

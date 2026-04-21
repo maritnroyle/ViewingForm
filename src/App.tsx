@@ -102,7 +102,7 @@ const generatePDF = (data: any, signatureBase64: string) => {
     {
       title: "Conduct During the Viewing",
       items: [
-        "Privacy First: Viewers are permitted to see the requested bedroom and all communal areas (kitchen, living room, shared bathrooms). Access to other occupied bedrooms is strictly prohibited.",
+        "Privacy First: Viewings are strictly limited to the specific bedroom being requested and all common areas (kitchen, living room, and shared bathrooms). Access to other occupied bedrooms is strictly prohibited.",
         "Respect the Space: Please refrain from sitting on furniture, opening drawers/closets containing personal belongings (unless specified), or using the bathroom facilities.",
         "Footwear Policy: To keep communal floors clean, please remove your shoes at the front door and use the shoe rack provided.",
         "No Smoking: Smoking or vaping is strictly prohibited inside the property and within the immediate vicinity of the entrance.",
@@ -120,8 +120,7 @@ const generatePDF = (data: any, signatureBase64: string) => {
       title: "Liability",
       items: [
         "Personal Injury: We are not liable for any accidents, injuries, or illnesses sustained during the viewing.",
-        "Personal Property: We are not responsible for the loss or damage of any personal items brought into the property by the viewer.",
-        "Damages: The viewer assumes full financial responsibility for any damage caused to the property or its contents during the viewing."
+        "Personal Property: We are not responsible for the loss or damage of any personal items brought into the property during a viewing."
       ]
     }
   ];
@@ -256,12 +255,13 @@ export default function App() {
         <div className="bg-white rounded-t-2xl shadow-sm overflow-hidden mb-6">
           <div className="h-32 bg-gradient-to-r from-[#002855] to-[#004080]"></div>
           <div className="px-8 pt-8 pb-8 relative">
-            <div className="absolute -top-12 left-8 w-24 h-24 bg-white rounded-2xl shadow-md flex flex-col items-center justify-center border-4 border-white p-2">
-              <svg viewBox="0 0 100 60" className="w-12 h-8 mb-1">
-                <path d="M 25 50 Q 15 50 15 40 Q 15 30 25 30 Q 30 15 50 15 Q 70 15 75 30 Q 85 30 85 40 Q 85 50 75 50" stroke="#42B4E6" fill="none" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div className="text-[#002855] font-serif italic font-bold text-[10px] leading-none">white cloud</div>
-              <div className="text-[#002855] font-sans font-bold text-[6px] tracking-widest mt-0.5">HOMESTAY</div>
+            <div className="absolute -top-12 left-8 w-24 h-24 bg-white rounded-2xl shadow-md flex items-center justify-center border-4 border-white overflow-hidden p-2">
+              <img 
+                src="/wclogo2026x.png" 
+                alt="WhiteCloud Homestay Logo" 
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer" 
+              />
             </div>
             <div className="mt-8">
               <h1 className="text-3xl font-bold text-[#002855] mb-2">WhiteCloud Homestay Viewing</h1>
@@ -566,7 +566,7 @@ export default function App() {
               <div>
                 <h4 className="font-bold text-slate-800 mb-2">Conduct During the Viewing</h4>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Privacy First:</strong> Viewers are permitted to see the requested bedroom and all communal areas (kitchen, living room, shared bathrooms). Access to other occupied bedrooms is strictly prohibited.</li>
+                  <li><strong>Privacy First:</strong> Viewings are strictly limited to the specific bedroom being requested and all common areas (kitchen, living room, and shared bathrooms). Access to other occupied bedrooms is strictly prohibited.</li>
                   <li><strong>Respect the Space:</strong> Please refrain from sitting on furniture, opening drawers/closets containing personal belongings (unless specified), or using the bathroom facilities.</li>
                   <li><strong>Footwear Policy:</strong> To keep communal floors clean, please remove your shoes at the front door and use the shoe rack provided.</li>
                   <li><strong>No Smoking:</strong> Smoking or vaping is strictly prohibited inside the property and within the immediate vicinity of the entrance.</li>
@@ -584,8 +584,7 @@ export default function App() {
                 <h4 className="font-bold text-slate-800 mb-2">Liability</h4>
                 <ul className="list-disc pl-5 space-y-1">
                   <li><strong>Personal Injury:</strong> We are not liable for any accidents, injuries, or illnesses sustained during the viewing.</li>
-                  <li><strong>Personal Property:</strong> We are not responsible for the loss or damage of any personal items brought into the property by the viewer.</li>
-                  <li><strong>Damages:</strong> The viewer assumes full financial responsibility for any damage caused to the property or its contents during the viewing.</li>
+                  <li><strong>Personal Property:</strong> We are not responsible for the loss or damage of any personal items brought into the property during a viewing.</li>
                 </ul>
               </div>
             </div>
